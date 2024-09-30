@@ -1,10 +1,21 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from model.creature import Creature
 from service import creature as service
 from errors import Missing, Duplicate
+import plotly.express as px
+import country_converter as coco
 
 router = APIRouter(prefix="/creature")
 
+
+@router.get("/map")
+def map():
+    creatures = service.get_all()
+    iso2_codes = set(creature.country for creature in creatures)
+    iso3_codes = coco.convert(names=iso2_codes, to="ISO3")
+    fig = px.choropleth(locationmode="ISO-3", locations=iso3_codes)
+    fig_bytes = fig.to_image(format='png')
+    return Response(content=fig_bytes, media_type="image/png")
 
 @router.get("")
 @router.get("/")
